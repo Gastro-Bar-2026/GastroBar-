@@ -1,44 +1,60 @@
+require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
+const Usuario = require('./Usuario');
+
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
-// Simulamos una "base de datos" temporal con un arreglo
-const usuarios = [];
+// Conexión a MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Conectado a MongoDB Atlas'))
+  .catch(err => console.error('Error al conectar a MongoDB:', err));
 
 app.get('/', (req, res) => {
   res.send('Servidor de GastroBar funcionando');
 });
 
 // Registro de usuario
-app.post('/register', (req, res) => {
-  const { nombre, correo, contraseña } = req.body;
+app.post('/register', async (req, res) => {
+  try {
+    const { nombre, correo, contraseña } = req.body;
 
-  if (!nombre || !correo || !contraseña) {
-    return res.status(400).json({ mensaje: 'Faltan datos: nombre, correo o contraseña' });
+    if (!nombre || !correo || !contraseña) {
+      return res.status(400).json({ mensaje: 'Faltan datos: nombre, correo o contraseña' });
+    }
+
+    const existe = await Usuario.findOne({ correo });
+    if (existe) {
+      return res.status(400).json({ mensaje: 'Ese correo ya está registrado' });
+    }
+
+    const nuevoUsuario = new Usuario({ nombre, correo, contraseña });
+    await nuevoUsuario.save();
+
+    res.status(201).json({ mensaje: 'Usuario registrado con éxito' });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error del servidor', error: error.message });
   }
-
-  const existe = usuarios.find(u => u.correo === correo);
-  if (existe) {
-    return res.status(400).json({ mensaje: 'Ese correo ya está registrado' });
-  }
-
-  usuarios.push({ nombre, correo, contraseña });
-  res.status(201).json({ mensaje: 'Usuario registrado con éxito' });
 });
 
 // Login
-app.post('/login', (req, res) => {
-  const { correo, contraseña } = req.body;
+app.post('/login', async (req, res) => {
+  try {
+    const { correo, contraseña } = req.body;
 
-  const usuario = usuarios.find(u => u.correo === correo && u.contraseña === contraseña);
+    const usuario = await Usuario.findOne({ correo, contraseña });
 
-  if (!usuario) {
-    return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
+    if (!usuario) {
+      return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
+    }
+
+    res.json({ mensaje: `Bienvenido, ${usuario.nombre}` });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error del servidor', error: error.message });
   }
-
-  res.json({ mensaje: `Bienvenido, ${usuario.nombre}` });
 });
 
 app.listen(PORT, () => {
