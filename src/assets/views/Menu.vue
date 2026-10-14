@@ -1,37 +1,20 @@
-<template>
+﻿<template>
   <div class="menu-component-root">
-    <!-- Barra superior mantenida también dentro de la vista del menú -->
-    <header class="navbar menu-navbar">
-      <button
-        type="button"
-        class="logo menu-home-trigger"
-        aria-label="Volver al inicio"
-        @click="emit('go-home')"
-      >
-        <span class="logo-text">GASTROBAR</span>
-      </button>
-
-      <nav class="nav-links">
-        <button type="button" class="nav-item menu-home-link" @click="emit('go-home')">Inicio</button>
-        <a href="#menu" class="nav-item active">Menú</a>
-        <a href="#interior" class="nav-item">Interior</a>
-        <button type="button" class="nav-item menu-home-link" @click="emit('go-home-nosotros')">Nosotros</button>
-        <a href="#contactos" class="nav-item">Contactos</a>
-      </nav>
-    </header>
+    <!-- Barra superior mantenida tambiÃ©n dentro de la vista del menÃº -->
+    <SiteNav active="menu" :authenticated="authenticated" :role="user?.role" @navigate="emit('navigate', $event)" @logout="emit('logout')" />
 
     <!-- =========================================================================
-         SECCIÓN DEL MENÚ (ENCABEZADO + FILTROS + TARJETAS FLYER "WHISKY NIGHT")
+         SECCIÃ“N DEL MENÃš (ENCABEZADO + FILTROS + TARJETAS FLYER "WHISKY NIGHT")
          ========================================================================= -->
     <section id="menu" class="menu-luxury-section">
       <div class="menu-header-center">
         <span class="menu-pre-tag">EXCLUSIVA CARTA DE CATA & ALTA COCINA</span>
-        <h2 class="menu-title-lux">MENÚ DE COMIDAS & CÓCTELES</h2>
+        <h2 class="menu-title-lux">MENÃš DE COMIDAS & CÃ“CTELES</h2>
         <p class="menu-lead-text">
-          Haz clic en cualquiera de las tarjetas para desplegar la tarjeta flotante con la ficha técnica detallada del producto.
+          Haz clic en cualquiera de las tarjetas para desplegar la tarjeta flotante con la ficha tÃ©cnica detallada del producto.
         </p>
 
-        <!-- Filtros de categoría -->
+        <!-- Filtros de categorÃ­a -->
         <div class="category-filter-bar">
           <button
             type="button"
@@ -39,7 +22,7 @@
             :class="{ active: activeFilter === 'todos' }"
             @click="activeFilter = 'todos'"
           >
-            Todo el Menú
+            Todo el MenÃº
           </button>
           <button
             type="button"
@@ -47,7 +30,7 @@
             :class="{ active: activeFilter === 'bebida' }"
             @click="activeFilter = 'bebida'"
           >
-            Cócteles & Whiskies
+            CÃ³cteles & Whiskies
           </button>
           <button
             type="button"
@@ -60,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Cuadrícula de 3 columnas: Tarjetas con diseño exacto del flyer WHISKY NIGHT -->
+      <!-- CuadrÃ­cula de 3 columnas: Tarjetas con diseÃ±o exacto del flyer WHISKY NIGHT -->
       <div class="tri-grid-container">
         <article
           v-for="product in filteredProducts"
@@ -82,9 +65,9 @@
             <span class="flyer-price-chip">{{ product.price }}</span>
           </div>
 
-          <!-- Cuerpo dividido en 2 columnas: Izquierda tipográfica y Derecha botella en barra -->
+          <!-- Cuerpo dividido en 2 columnas: Izquierda tipogrÃ¡fica y Derecha botella en barra -->
           <div class="flyer-split-body">
-            <!-- Columna Izquierda: Club Name en arco, WHISKY NIGHT, Welcome, Glass y Dirección -->
+            <!-- Columna Izquierda: Club Name en arco, WHISKY NIGHT, Welcome, Glass y DirecciÃ³n -->
             <div class="flyer-col-left">
               <!-- Nombre del Club en Arco SVG -->
               <div class="flyer-arc-wrapper">
@@ -107,7 +90,7 @@
                 <span class="flyer-present-tag">PRESENTA</span>
               </div>
 
-              <!-- Título Principal BOLD condensado: WHISKY NIGHT -->
+              <!-- TÃ­tulo Principal BOLD condensado: WHISKY NIGHT -->
               <div class="flyer-headline-stack">
                 <span class="flyer-headline-word">{{ product.flyerTitleTop }}</span>
                 <span class="flyer-headline-word">{{ product.flyerTitleBottom }}</span>
@@ -116,13 +99,13 @@
               <!-- Letra manuscrita elegante: Welcome -->
               <div class="flyer-script-welcome">Bienvenido</div>
 
-              <!-- Subtítulo: THE BEST WHISKY IN THE WORLD -->
+              <!-- SubtÃ­tulo: THE BEST WHISKY IN THE WORLD -->
               <div class="flyer-sub-banner">
                 <span class="flyer-sub-title">{{ product.flyerSubtitle }}</span>
                 <span class="flyer-sub-lead">{{ product.flyerTagline }}</span>
               </div>
 
-              <!-- Párrafo pequeño de cata / lorem ipsum -->
+              <!-- PÃ¡rrafo pequeÃ±o de cata / lorem ipsum -->
               <p class="flyer-small-print">
                 LOREM IPSUM DOLOR SIT AMET, CONSECTETUR ADIP SCING ELIT, SED DO EIUSMOD.
               </p>
@@ -138,7 +121,7 @@
                 <div class="flyer-glass-vignette"></div>
               </div>
 
-              <!-- Dirección al pie del flyer -->
+              <!-- DirecciÃ³n al pie del flyer -->
               <div class="flyer-bottom-address">
                 {{ product.address }}
               </div>
@@ -158,7 +141,7 @@
               <!-- Indicador interactivo para abrir la tarjeta flotante -->
               <div class="flyer-action-hint">
                 <span>VER DETALLES</span>
-                <span class="flyer-hint-arrow">→</span>
+                <span class="flyer-hint-arrow">â†’</span>
               </div>
             </div>
           </div>
@@ -175,17 +158,17 @@
       @click.self="closeModal"
     >
       <div class="prosandoval-card" role="dialog" aria-modal="true">
-        <!-- Botón cerrar (X) -->
+        <!-- BotÃ³n cerrar (X) -->
         <button
           type="button"
           class="prosandoval-close-btn"
           aria-label="Cerrar modal"
           @click="closeModal"
         >
-          ✕
+          âœ•
         </button>
 
-        <!-- Barra superior de navegación interna -->
+        <!-- Barra superior de navegaciÃ³n interna -->
         <div class="prosandoval-navbar">
           <div class="prosandoval-brand">
             <svg class="prosandoval-logo-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -199,7 +182,7 @@
 
           <nav class="prosandoval-nav-links">
             <span class="prosandoval-nav-link">INICIO</span>
-            <span class="prosandoval-nav-link">CATEGORÍAS</span>
+            <span class="prosandoval-nav-link">CATEGORÃAS</span>
             <span class="prosandoval-nav-link">OFERTAS</span>
             <span class="prosandoval-nav-link">BLOG</span>
             <span class="prosandoval-nav-link">CONTACTO</span>
@@ -216,7 +199,7 @@
 
         <!-- Cuerpo a 2 Columnas -->
         <div class="prosandoval-body-grid">
-          <!-- Columna Izquierda: Información Textual -->
+          <!-- Columna Izquierda: InformaciÃ³n Textual -->
           <div class="prosandoval-info-col">
             <span class="prosandoval-category-tag">{{ selectedProduct.categoryLabel }}</span>
             <h2 class="prosandoval-product-title">{{ selectedProduct.name }}</h2>
@@ -235,7 +218,7 @@
               :class="{ success: orderSuccess }"
               @click="handleOrder"
             >
-              {{ orderSuccess ? '¡ORDENADO CON ÉXITO!' : 'COMPRAR AHORA' }}
+              {{ orderSuccess ? 'Â¡ORDENADO CON Ã‰XITO!' : 'COMPRAR AHORA' }}
             </button>
 
             <div class="prosandoval-dots-box">
@@ -265,8 +248,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import SiteNav from './SiteNav.vue'
 
-const emit = defineEmits(['go-home'])
+defineProps({ authenticated: Boolean, user: Object })
+const emit = defineEmits(['navigate', 'logout'])
 
 const isModalOpen = ref(false)
 const selectedProduct = ref(null)
@@ -280,7 +265,7 @@ const menuProducts = ref([
     categoryLabel: 'WHISKY',
     name: "JACK DANIEL'S",
     price: '$ 28.000 COP',
-    description: 'Muy dulce con notas fuertes de vainilla, plátano y coco; el sabor es intenso a plátano, vainilla, azúcar morena y pimienta rosada.',
+    description: 'Muy dulce con notas fuertes de vainilla, plÃ¡tano y coco; el sabor es intenso a plÃ¡tano, vainilla, azÃºcar morena y pimienta rosada.',
     cardImage: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=400&q=80',
@@ -297,7 +282,7 @@ const menuProducts = ref([
     categoryLabel: 'WHISKY',
     name: 'JOHNNIE WALKER',
     price: '$ 24.000 COP',
-    description: 'Black Label 12 años. Ricas notas de frutas maduras del bosque, toques de vainilla cremosa y una inconfundible estela de turba ahumada.',
+    description: 'Black Label 12 aÃ±os. Ricas notas de frutas maduras del bosque, toques de vainilla cremosa y una inconfundible estela de turba ahumada.',
     cardImage: 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1569529465841-dfecdab7503b?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80',
@@ -314,7 +299,7 @@ const menuProducts = ref([
     categoryLabel: 'WHISKY',
     name: 'TALISKER 10',
     price: '$ 32.000 COP',
-    description: 'Single Malt de la Isla de Skye. Notas marinas salinas con pimienta negra recién molida, cebada malteada y un humo envolvente.',
+    description: 'Single Malt de la Isla de Skye. Notas marinas salinas con pimienta negra reciÃ©n molida, cebada malteada y un humo envolvente.',
     cardImage: 'https://images.unsplash.com/photo-1582819509237-d5b75f20ff7a?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1582819509237-d5b75f20ff7a?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=400&q=80',
@@ -331,7 +316,7 @@ const menuProducts = ref([
     categoryLabel: 'WHISKY',
     name: 'JAMESON TRIPLE',
     price: '$ 25.000 COP',
-    description: 'Triple destilado irlandés con notas ricas de vainilla cremosa, madera tostada y final suavemente especiado.',
+    description: 'Triple destilado irlandÃ©s con notas ricas de vainilla cremosa, madera tostada y final suavemente especiado.',
     cardImage: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80',
@@ -348,7 +333,7 @@ const menuProducts = ref([
     categoryLabel: 'WHISKY',
     name: 'BARTERHOUSE 20',
     price: '$ 45.000 COP',
-    description: 'Bourbon añejado 20 años en barricas vírgenes de roble americano carbonizado. Caramelo oscuro, nuez moscada y vainas de vainilla pura.',
+    description: 'Bourbon aÃ±ejado 20 aÃ±os en barricas vÃ­rgenes de roble americano carbonizado. Caramelo oscuro, nuez moscada y vainas de vainilla pura.',
     cardImage: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=400&q=80',
@@ -362,16 +347,16 @@ const menuProducts = ref([
   {
     id: 106,
     categoryType: 'bebida',
-    categoryLabel: 'CÓCTEL',
+    categoryLabel: 'CÃ“CTEL',
     name: 'NEGRONI NEBULA',
     price: '$ 18.000 COP',
-    description: 'Campari macerado en frío con botánicos espaciales, ginebra seca artesanal en alambique de cobre y notas florales de naranja amarga.',
+    description: 'Campari macerado en frÃ­o con botÃ¡nicos espaciales, ginebra seca artesanal en alambique de cobre y notas florales de naranja amarga.',
     cardImage: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80',
     clubName: 'NOMBRE DE TU CLUB',
     flyerTitleTop: 'NOCHE DE',
-    flyerTitleBottom: 'CÓCTELES',
+    flyerTitleBottom: 'CÃ“CTELES',
     flyerSubtitle: 'LA MEJOR MEZCLA',
     flyerTagline: 'DEL MUNDO',
     address: '3499 Bridge Avenue, Lafayette- 70506'
@@ -380,9 +365,9 @@ const menuProducts = ref([
     id: 107,
     categoryType: 'comida',
     categoryLabel: 'ALTA COCINA',
-    name: 'TÁRTAR BALFEGÓ',
+    name: 'TÃRTAR BALFEGÃ“',
     price: '$ 35.000 COP',
-    description: 'Atún rojo Balfegó cortado fino a cuchillo, emulsión de trufa negra melanosporum, alga nori tostada y perlas de caviar Oscietra.',
+    description: 'AtÃºn rojo BalfegÃ³ cortado fino a cuchillo, emulsiÃ³n de trufa negra melanosporum, alga nori tostada y perlas de caviar Oscietra.',
     cardImage: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=400&q=80',
@@ -399,7 +384,7 @@ const menuProducts = ref([
     categoryLabel: 'CARNES MADURADAS',
     name: 'ENTRECOT AL SARMIENTO',
     price: '$ 32.000 COP',
-    description: 'Corte madurado 45 días asado a la leña de sarmiento con mantequilla aromatizada de romero, ajo confitado y escamas de sal negra.',
+    description: 'Corte madurado 45 dÃ­as asado a la leÃ±a de sarmiento con mantequilla aromatizada de romero, ajo confitado y escamas de sal negra.',
     cardImage: 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?auto=format&fit=crop&w=400&q=80',
@@ -416,14 +401,14 @@ const menuProducts = ref([
     categoryLabel: 'TAPAS SELECTAS',
     name: 'TABLA 100% BELLOTA',
     price: '$ 28.000 COP',
-    description: 'Paleta ibérica de bellota cortada al momento, cuña de queso curado trufado en aceite de oliva virgen extra y tostas artesanales.',
+    description: 'Paleta ibÃ©rica de bellota cortada al momento, cuÃ±a de queso curado trufado en aceite de oliva virgen extra y tostas artesanales.',
     cardImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=400&q=80',
     clubName: 'NOMBRE DE TU CLUB',
     flyerTitleTop: 'NOCHE',
     flyerTitleBottom: 'DELICIOSA',
-    flyerSubtitle: 'LA MEJOR SELECCIÓN',
+    flyerSubtitle: 'LA MEJOR SELECCIÃ“N',
     flyerTagline: 'DEL MUNDO',
     address: '3499 Bridge Avenue, Lafayette- 70506'
   },
@@ -450,7 +435,7 @@ const menuProducts = ref([
     categoryLabel: 'HAMBURGUESAS GOURMET',
     name: 'TRUFA Y TOCINO',
     price: '$ 32.000 COP',
-    description: 'Doble carne a la parrilla, tocino crujiente, queso suizo, mayonesa de trufa y rúcula fresca sobre pan brioche artesanal.',
+    description: 'Doble carne a la parrilla, tocino crujiente, queso suizo, mayonesa de trufa y rÃºcula fresca sobre pan brioche artesanal.',
     cardImage: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=400&q=80',
@@ -467,7 +452,7 @@ const menuProducts = ref([
     categoryLabel: 'HAMBURGUESAS GOURMET',
     name: 'POLLO CRUJIENTE BBQ',
     price: '$ 26.000 COP',
-    description: 'Pollo crujiente, queso gouda, ensalada cremosa, jalapeños y salsa BBQ ahumada en pan de sésamo.',
+    description: 'Pollo crujiente, queso gouda, ensalada cremosa, jalapeÃ±os y salsa BBQ ahumada en pan de sÃ©samo.',
     cardImage: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=400&q=80',
@@ -482,9 +467,9 @@ const menuProducts = ref([
     id: 113,
     categoryType: 'comida',
     categoryLabel: 'SALCHIPAPAS',
-    name: 'SALCHIPAPA CLÁSICA',
+    name: 'SALCHIPAPA CLÃSICA',
     price: '$ 18.000 COP',
-    description: 'Papas doradas, salchicha ahumada en rodajas y queso fundido, terminadas con kétchup, mostaza, mayonesa de la casa y cebollino fresco.',
+    description: 'Papas doradas, salchicha ahumada en rodajas y queso fundido, terminadas con kÃ©tchup, mostaza, mayonesa de la casa y cebollino fresco.',
     cardImage: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=800&q=85',
     bottleImage: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=800&q=85',
     flyerGlass: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=400&q=80',
