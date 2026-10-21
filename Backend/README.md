@@ -9,6 +9,18 @@
 
 1. En esta carpeta, copia `.env.example` como `.env`.
 2. En `.env`, define `MONGO_URI` con la URI privada de tu instancia de MongoDB.
+3. Define también `JWT_SECRET` con una clave larga y segura (puedes generarla con
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
+4. Opcional: ajusta `JWT_EXPIRES_IN` (por defecto `1d`) para cambiar la duración del token.
+5. Instala las dependencias con `npm install`.
+6. Inicia la API con `npm start`.
+
+## Autenticación (JWT)
+
+- `POST /api/usuarios/register` — registra un cliente y devuelve un `token`.
+- `POST /api/usuarios/login` — valida credenciales y devuelve un `token`.
+
+Las rutas protegidas esperan el header `Authorization: Bearer <token>`.
 3. Instala las dependencias con `npm install`.
 4. Inicia la API con `npm start`.
 

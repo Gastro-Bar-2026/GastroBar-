@@ -39,6 +39,10 @@ app.listen(PORT, () => {
   console.log(`Servidor de GastroBar corriendo en http://localhost:${PORT}`);
 });
 
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET no está configurado. Copia .env.example a .env y define una clave segura.');
+}
+
 if (!MONGO_URI) {
   console.error('MONGO_URI no está configurado. Copia .env.example a .env y configura tu conexión a MongoDB.');
 } else {

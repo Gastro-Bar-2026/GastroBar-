@@ -1,4 +1,14 @@
+const jwt = require('jsonwebtoken');
 const Usuario = require('../models/usuario');
+
+// Genera un token JWT firmado con el id y el rol del usuario
+const firmarToken = (usuario) => {
+  return jwt.sign(
+    { id: usuario._id, rol: usuario.rol },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+  );
+};
 
 // Registro
 exports.register = async (req, res) => {
@@ -13,7 +23,17 @@ exports.register = async (req, res) => {
     }
     const nuevoUsuario = new Usuario({ nombre, correo, contraseña, telefono, rol: 'cliente' });
     await nuevoUsuario.save();
-    res.status(201).json({ mensaje: 'Cliente registrado con éxito', usuario: nuevoUsuario });
+    const token = firmarToken(nuevoUsuario);
+    res.status(201).json({
+      mensaje: 'Cliente registrado con éxito',
+      token,
+      usuario: {
+        id: nuevoUsuario._id,
+        nombre: nuevoUsuario.nombre,
+        correo: nuevoUsuario.correo,
+        rol: nuevoUsuario.rol
+      }
+    });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error del servidor', error: error.message });
   }
@@ -23,11 +43,24 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { correo, contraseña } = req.body;
+    if (!correo || !contraseña) {
+      return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
+    }
     const usuario = await Usuario.findOne({ correo, contraseña });
     if (!usuario) {
       return res.status(401).json({ mensaje: 'Correo o contraseña incorrectos' });
     }
-    res.json({ mensaje: `Bienvenido, ${usuario.nombre}`, usuario });
+    const token = firmarToken(usuario);
+    res.json({
+      mensaje: `Bienvenido, ${usuario.nombre}`,
+      token,
+      usuario: {
+        id: usuario._id,
+        nombre: usuario.nombre,
+        correo: usuario.correo,
+        rol: usuario.rol
+      }
+    });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error del servidor', error: error.message });
   }
