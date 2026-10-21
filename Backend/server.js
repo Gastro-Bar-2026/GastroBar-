@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 const authRoutes = require('./routes/authRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,7 +36,6 @@ app.use('/api', (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/servicios', servicioRoutes);
-app.use('/api/Dashboard', dashboardRoutes);
 
 app.listen(PORT, () => {
   console.log(`Servidor de GastroBar corriendo en http://localhost:${PORT}`);
