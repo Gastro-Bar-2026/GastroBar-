@@ -21,6 +21,8 @@
 - `POST /api/usuarios/login` — valida credenciales y devuelve un `token`.
 
 Las rutas protegidas esperan el header `Authorization: Bearer <token>`.
+3. Instala las dependencias con `npm install`.
+4. Inicia la API con `npm start`.
 
 La API escucha en `http://localhost:3000` por defecto. La ruta `/health` informa
 si MongoDB está conectado; las rutas `/api` responden `503` hasta que la base de
