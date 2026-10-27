@@ -1,11 +1,24 @@
 const Servicio = require('../models/servicio');
 
+// Campos que el cliente puede enviar; evita inyectar _id, timestamps, etc.
+const CAMPOS_PERMITIDOS = ['nombre', 'descripcion', 'precio', 'categoria', 'disponible'];
+
+const filtrarCampos = (body = {}) => {
+  return CAMPOS_PERMITIDOS.reduce((acc, campo) => {
+    if (body[campo] !== undefined) acc[campo] = body[campo];
+    return acc;
+  }, {});
+};
+
 // Crear servicio
 exports.crearServicio = async (req, res) => {
   try {
     const { nombre, descripcion, precio, categoria, disponible } = req.body;
     if (!nombre || precio === undefined || !categoria) {
       return res.status(400).json({ mensaje: 'Nombre, precio y categoría son obligatorios' });
+    }
+    if (typeof precio !== 'number' || Number.isNaN(precio) || precio < 0) {
+      return res.status(400).json({ mensaje: 'El precio debe ser un número mayor o igual a 0' });
     }
     const nuevoServicio = new Servicio({ nombre, descripcion, precio, categoria, disponible });
     await nuevoServicio.save();
@@ -41,7 +54,19 @@ exports.obtenerServicioPorId = async (req, res) => {
 // Actualizar
 exports.actualizarServicio = async (req, res) => {
   try {
-    const actualizado = await Servicio.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const datos = filtrarCampos(req.body);
+
+    if (datos.precio !== undefined) {
+      if (typeof datos.precio !== 'number' || Number.isNaN(datos.precio) || datos.precio < 0) {
+        return res.status(400).json({ mensaje: 'El precio debe ser un número mayor o igual a 0' });
+      }
+    }
+
+    if (Object.keys(datos).length === 0) {
+      return res.status(400).json({ mensaje: 'No se enviaron campos válidos para actualizar' });
+    }
+
+    const actualizado = await Servicio.findByIdAndUpdate(req.params.id, datos, { new: true, runValidators: true });
     if (!actualizado) return res.status(404).json({ mensaje: 'Servicio no encontrado' });
     res.json(actualizado);
   } catch (error) {
