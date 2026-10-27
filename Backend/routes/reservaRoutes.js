@@ -12,4 +12,7 @@ router.get('/', verificarToken, reservaController.obtenerReservas);
 // PUT /api/reservas/:id -> Actualizar reserva (HUS-08)
 router.put('/:id', verificarToken, reservaController.actualizarReserva);
 
+// DELETE /api/reservas/:id -> Cancelar / Eliminar reserva (HUS-09)
+router.delete('/:id', verificarToken, reservaController.eliminarReserva);
+
 module.exports = router;
