@@ -126,3 +126,37 @@ exports.actualizarReserva = async (req, res) => {
     });
   }
 };
+
+
+
+// HUS-09: Cancelar / Eliminar reserva
+exports.eliminarReserva = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuarioId = req.usuario ? (req.usuario.id || req.usuario._id) : null;
+    const esAdmin = req.usuario && req.usuario.rol === 'admin';
+
+    // Verificar si la reserva existe
+    const reserva = await Reserva.findById(id);
+    if (!reserva) {
+      return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+    }
+
+    // Un cliente solo puede eliminar sus propias reservas
+    if (!esAdmin && reserva.usuario.toString() !== usuarioId.toString()) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para eliminar esta reserva' });
+    }
+
+    await Reserva.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      mensaje: 'Reserva cancelada y eliminada exitosamente',
+      idEliminado: id
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Error al eliminar la reserva',
+      error: error.message
+    });
+  }
+};
