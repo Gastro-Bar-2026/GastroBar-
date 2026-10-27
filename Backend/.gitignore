@@ -1,2 +1,9 @@
 node_modules/
 .env
+
+# Logs del servidor
+*.log
+
+# Archivos sueltos (duplicados, no forman parte del proyecto)
+/usuario.js
+/servicio.js

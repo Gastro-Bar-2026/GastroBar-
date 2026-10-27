@@ -7,8 +7,9 @@ const { verificarToken, autorizarRol } = require('../middlewares/auth');
 router.post('/register', usuarioCtrl.register);
 router.post('/login', usuarioCtrl.login);
 
-// CRUD (protegidas: solo admin)
+// CRUD (protegidas)
 router.get('/', verificarToken, autorizarRol('admin'), usuarioCtrl.obtenerUsuarios);
+// admin o el propio usuario (se valida dentro del controlador)
 router.get('/:id', verificarToken, usuarioCtrl.obtenerUsuarioPorId);
 router.put('/:id', verificarToken, usuarioCtrl.actualizarUsuario);
 router.delete('/:id', verificarToken, autorizarRol('admin'), usuarioCtrl.eliminarUsuario);
