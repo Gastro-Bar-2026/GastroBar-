@@ -78,3 +78,51 @@ exports.obtenerReservas = async (req, res) => {
     });
   }
 };
+
+
+
+// HUS-08: Actualizar reserva
+exports.actualizarReserva = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fecha, numeroPersonas, notas, estado } = req.body;
+    const usuarioId = req.usuario ? (req.usuario.id || req.usuario._id) : null;
+    const esAdmin = req.usuario && req.usuario.rol === 'admin';
+
+    // Buscar si la reserva existe
+    const reserva = await Reserva.findById(id);
+    if (!reserva) {
+      return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+    }
+
+    // Un cliente solo puede editar sus propias reservas
+    if (!esAdmin && reserva.usuario.toString() !== usuarioId.toString()) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para modificar esta reserva' });
+    }
+
+    // Validar fecha futura si se intenta modificar
+    if (fecha) {
+      const fechaNueva = new Date(fecha);
+      if (isNaN(fechaNueva.getTime()) || fechaNueva <= new Date()) {
+        return res.status(400).json({ mensaje: 'La fecha de la reserva debe ser futura' });
+      }
+      reserva.fecha = fechaNueva;
+    }
+
+    if (numeroPersonas) reserva.numeroPersonas = numeroPersonas;
+    if (notas !== undefined) reserva.notas = notas;
+    if (estado) reserva.estado = estado; // ej: 'confirmada', 'cancelada'
+
+    await reserva.save();
+
+    return res.status(200).json({
+      mensaje: 'Reserva actualizada exitosamente',
+      reserva
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Error al actualizar la reserva',
+      error: error.message
+    });
+  }
+};
