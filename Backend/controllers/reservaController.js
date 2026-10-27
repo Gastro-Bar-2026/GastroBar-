@@ -48,3 +48,33 @@ exports.crearReserva = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+// HUS-07: Consultar reservas
+exports.obtenerReservas = async (req, res) => {
+  try {
+    const usuarioId = req.usuario ? (req.usuario.id || req.usuario._id) : null;
+    const esAdmin = req.usuario && req.usuario.rol === 'admin';
+
+    // Si es administrador puede ver todas; si es cliente solo las que él registró
+    const filtro = esAdmin ? {} : { usuario: usuarioId };
+
+    const reservas = await Reserva.find(filtro)
+      .populate('servicio', 'nombre precio descripcion')
+      .populate('usuario', 'nombre correo')
+      .sort({ fecha: 1 });
+
+    return res.status(200).json({
+      total: reservas.length,
+      reservas
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: 'Error al consultar las reservas',
+      error: error.message
+    });
+  }
+};
