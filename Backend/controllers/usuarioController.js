@@ -13,7 +13,8 @@ const firmarToken = (usuario) => {
 // Registro
 exports.register = async (req, res) => {
   try {
-    const { nombre, correo, contraseña, telefono } = req.body;
+    const { nombre, contraseña, telefono } = req.body;
+    const correo = String(req.body.correo || '').trim().toLowerCase();
     if (!nombre || !correo || !contraseña) {
       return res.status(400).json({ mensaje: 'Faltan datos obligatorios: nombre, correo o contraseña' });
     }
@@ -48,7 +49,8 @@ exports.register = async (req, res) => {
 // Login
 exports.login = async (req, res) => {
   try {
-    const { correo, contraseña } = req.body;
+    const correo = String(req.body.correo || '').trim().toLowerCase();
+    const { contraseña } = req.body;
     if (!correo || !contraseña) {
       return res.status(400).json({ mensaje: 'Correo y contraseña son obligatorios' });
     }

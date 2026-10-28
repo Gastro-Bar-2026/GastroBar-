@@ -3,67 +3,38 @@
 ## Requisitos
 
 - Node.js
-- Una instancia de MongoDB (Atlas o local)
+- Una instancia de MongoDB local o Atlas
 
-## Configuracion e inicio
+## Configuración e inicio
 
-1. En esta carpeta, copia `.env.example` como `.env`.
-2. En `.env`, define `MONGO_URI` con la URI privada de tu instancia de MongoDB.
-3. Define también `JWT_SECRET` con una clave larga y segura (puedes generarla con
-   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`).
-4. Opcional: ajusta `JWT_EXPIRES_IN` (por defecto `1d`) para cambiar la duración del token.
-5. Instala las dependencias con `npm install`.
-6. Inicia la API con `npm start`.
+1. Copia `.env.example` a `.env`.
+2. Define `MONGO_URI` con la conexión a tu base de datos.
+3. Genera un secreto JWT seguro y asígnalo a `JWT_SECRET`:
+   `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+4. Define `ADMIN_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` para crear el primer
+   administrador. Usa una contraseña segura; el backend no crea administradores
+   con credenciales predeterminadas. Si la cuenta ya existe, no se modifica.
+5. Instala e inicia el backend: `npm install` y `npm start`.
 
-## Autenticación (JWT)
+El servidor escucha en `http://localhost:3000`. En el primer inicio inserta un
+catálogo inicial si todavía no hay servicios. Las rutas `/api` requieren una
+conexión activa con MongoDB. La ruta `/health` informa el estado de la API y la
+base de datos.
 
-- `POST /api/auth/register` — registra un cliente y devuelve un `token`.
-- `POST /api/auth/login` — valida credenciales y devuelve un `token`.
+## API principal
 
-Las rutas protegidas esperan el header `Authorization: Bearer <token>`.
+- `POST /api/auth/register` y `POST /api/auth/login` — registro de clientes e
+  inicio de sesión; ambas respuestas incluyen un token JWT.
+- `GET /api/servicios` — catálogo público.
+- `POST /api/reservas` — crea una reserva para el usuario autenticado.
+- `GET /api/reservas` — el cliente consulta sus reservas y el administrador
+  consulta todas.
+- `PUT /api/reservas/:id` — permite actualizar una reserva propia; solo un
+  administrador puede cambiar su estado.
+- `POST`, `PUT` y `DELETE /api/servicios` — gestión de catálogo para
+  administradores.
+- `GET /api/usuarios` y `GET /api/Dashboard/stats` — información administrativa.
 
-### Body de `POST /api/auth/register`
-
-```json
-{
-  "nombre": "Ana Pérez",
-  "correo": "ana@example.com",
-  "contraseña": "secreta123",
-  "telefono": "3001234567"
-}
-```
-
-- `nombre`, `correo` y `contraseña` son obligatorios; `telefono` es opcional.
-- El `rol` se asigna siempre como `cliente` en el registro.
-- Respuestas: `201` con `{ mensaje, token, usuario }`, `400` si faltan datos o el
-  correo ya existe, `500` ante un error del servidor.
-
-> Compatibilidad: las rutas equivalentes bajo `/api/usuarios/register` y
-> `/api/usuarios/login` siguen activas.
-
-## Dashboard
-
-- `GET /api/Dashboard/stats` — devuelve los totales de usuarios (total,
-  clientes y administradores) y servicios (total, disponibles y no disponibles).
-- Requiere un token Bearer de un usuario con rol `admin`.
-
-Ejemplo de respuesta:
-
-```json
-{
-  "usuarios": {
-    "total": 12,
-    "clientes": 10,
-    "administradores": 2
-  },
-  "servicios": {
-    "total": 8,
-    "disponibles": 6,
-    "noDisponibles": 2
-  }
-}
-```
-
-La API escucha en `http://localhost:3000` por defecto. La ruta `/health` informa
-si MongoDB está conectado; las rutas `/api` responden `503` hasta que la base de
-datos esté disponible.
+Las rutas protegidas requieren `Authorization: Bearer <token>`. Para desarrollo,
+el frontend Vite usa un proxy hacia este servidor. En despliegues con orígenes
+distintos, configura `CORS_ORIGIN` con el origen exacto del frontend.

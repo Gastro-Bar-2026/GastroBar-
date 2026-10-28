@@ -8,7 +8,7 @@ const props = defineProps({
   user: { type: Object, default: () => ({}) },
   initialSection: { type: String, default: 'productos' }
 })
-const emit = defineEmits(['update:modelValue', 'update:reservations', 'update:users', 'navigate', 'logout'])
+const emit = defineEmits(['update:modelValue', 'update:reservations', 'confirm-reservation', 'cancel-reservation', 'edit-reservation', 'update:users', 'navigate', 'logout'])
 const servicios = computed({ get: () => props.modelValue, set: valor => emit('update:modelValue', valor) })
 const filtro = ref('')
 const paginaActual = ref(1)
@@ -128,7 +128,14 @@ function confirmarEliminacion() {
 }
 
 function cambiarEstadoReserva(reserva, estado) {
-  emit('update:reservations', props.reservations.map(item => item.id === reserva.id ? { ...item, status: estado } : item))
+  if (reserva.status === 'Cancelada') return
+  if (estado === 'Cancelada') return emit('cancel-reservation', reserva)
+  if (estado === 'Confirmada') return emit('confirm-reservation', reserva)
+}
+
+function editarReserva(reserva) {
+  if (reserva.status === 'Cancelada') return
+  emit('edit-reservation', reserva)
 }
 
 function nuevaCuenta() {
@@ -161,6 +168,11 @@ function guardarCuenta() {
   }
   if (idUsuarioEditando.value !== null) {
     const cuentaActual = props.users.find(usuario => usuario.id === idUsuarioEditando.value)
+    const esCuentaPrincipal = usuarioCorreoEsAdmin(cuentaActual)
+    if (esCuentaPrincipal && (datos.rol !== 'admin' || datos.estado !== 'Activo')) {
+      avisoUsuario.value = 'La cuenta del administrador principal no puede modificarse.'
+      return
+    }
     if (cuentaActual?.correo === props.user?.email && (datos.rol !== 'admin' || datos.estado !== 'Activo')) {
       avisoUsuario.value = 'No puedes cambiar el rol o desactivar tu propia cuenta de administrador.'
       return
@@ -173,8 +185,15 @@ function guardarCuenta() {
   modalUsuarioAbierto.value = false
 }
 
+const esCorreoAdmin = correo => correo === 'admin@gastrobar.com'
+const usuarioCorreoEsAdmin = usuario => !!usuario && (usuario.correo === 'admin@gastrobar.com' || usuario.email === 'admin@gastrobar.com')
+
 function eliminarCuenta(usuario) {
   if (usuario.correo === props.user?.email) return
+  if (usuarioCorreoEsAdmin(usuario)) {
+    avisoUsuario.value = 'La cuenta del administrador principal no puede eliminarse.'
+    return
+  }
   emit('update:users', props.users.filter(item => item.id !== usuario.id))
   paginaUsuarios.value = Math.min(paginaUsuarios.value, totalPaginasUsuarios.value)
 }
@@ -252,7 +271,7 @@ function formatDate(value) {
           </div>
           <div v-if="!reservasFiltradas.length" class="vacio">{{ props.reservations.length ? 'No se encontraron reservas con estos criterios.' : 'Todavía no hay solicitudes de reserva.' }}</div>
           <div v-else class="tabla-contenedor"><table><thead><tr><th>ID</th><th>Cliente</th><th>Correo electrónico</th><th>Fecha</th><th>Hora</th><th>Personas</th><th>Notas</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
-            <tr v-for="(reserva, indice) in reservasPaginadas" :key="reserva.id"><td>{{ (paginaReservas - 1) * serviciosPorPagina + indice + 1 }}</td><td><div class="producto"><span class="sin-foto">{{ iniciales(reserva.customer || 'Cliente') }}</span><strong>{{ reserva.customer || 'Cliente' }}</strong></div></td><td>{{ reserva.email || '—' }}</td><td>{{ formatDate(reserva.date) }}</td><td>{{ reserva.time || '—' }}</td><td>{{ reserva.guests }}</td><td>{{ reserva.notes || '—' }}</td><td><span class="etiqueta-categoria" :class="`estado-${reserva.status.toLocaleLowerCase('es')}`">{{ reserva.status }}</span></td><td><div class="acciones"><button type="button" :disabled="reserva.status === 'Confirmada'" @click="cambiarEstadoReserva(reserva, 'Confirmada')">Confirmar</button><button type="button" class="eliminar" :disabled="reserva.status === 'Cancelada'" @click="cambiarEstadoReserva(reserva, 'Cancelada')">Cancelar</button></div></td></tr>
+            <tr v-for="(reserva, indice) in reservasPaginadas" :key="reserva.id"><td>{{ (paginaReservas - 1) * serviciosPorPagina + indice + 1 }}</td><td><div class="producto"><span class="sin-foto">{{ iniciales(reserva.customer || 'Cliente') }}</span><strong>{{ reserva.customer || 'Cliente' }}</strong></div></td><td>{{ reserva.email || '—' }}</td><td>{{ formatDate(reserva.date) }}</td><td>{{ reserva.time || '—' }}</td><td>{{ reserva.guests }}</td><td>{{ reserva.notes || '—' }}</td><td><span class="etiqueta-categoria" :class="`estado-${reserva.status.toLocaleLowerCase('es')}`">{{ reserva.status }}</span></td><td><div class="acciones"><button type="button" :disabled="reserva.status !== 'Pendiente'" @click="cambiarEstadoReserva(reserva, 'Confirmada')">Confirmar</button><button type="button" :disabled="reserva.status === 'Cancelada'" @click="editarReserva(reserva)">Editar</button><button type="button" class="eliminar" :disabled="reserva.status === 'Cancelada'" @click="cambiarEstadoReserva(reserva, 'Cancelada')">Cancelar</button></div></td></tr>
           </tbody></table></div>
           <div class="pie-tabla">
             <span>Mostrando {{ reservasFiltradas.length ? (paginaReservas - 1) * serviciosPorPagina + 1 : 0 }} - {{ Math.min(paginaReservas * serviciosPorPagina, reservasFiltradas.length) }} de {{ reservasFiltradas.length }} reservas</span>
@@ -268,7 +287,7 @@ function formatDate(value) {
           <div class="tabla-titulo"><div><h2>Usuarios del sistema</h2><p>Clientes, empleados y administradores del gastrobar.</p></div><span>{{ props.users.length }} usuarios</span></div>
           <div v-if="!usuariosFiltrados.length" class="vacio">{{ props.users.length ? 'No se encontraron usuarios con esta búsqueda.' : 'Todavía no hay cuentas registradas.' }}</div>
           <div v-else class="tabla-contenedor"><table><thead><tr><th>ID</th><th>Nombre</th><th>Correo electrónico</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
-            <tr v-for="(usuario, indice) in usuariosPaginados" :key="usuario.id"><td>{{ (paginaUsuarios - 1) * serviciosPorPagina + indice + 1 }}</td><td><div class="producto"><span class="sin-foto">{{ iniciales(usuario.nombre) }}</span><strong>{{ usuario.nombre }}</strong></div></td><td>{{ usuario.correo }}</td><td><span class="etiqueta-categoria" :class="`rol-${usuario.rol}`">{{ etiquetaRol(usuario.rol) }}</span></td><td><span class="etiqueta-categoria" :class="usuario.estado === 'Activo' ? 'estado-activo' : 'estado-inactivo'">{{ usuario.estado }}</span></td><td><div class="acciones"><button type="button" aria-label="Editar usuario" :disabled="usuario.correo === props.user?.email" @click="editarCuenta(usuario)">Editar</button><button type="button" class="eliminar" aria-label="Eliminar usuario" :disabled="usuario.correo === props.user?.email" @click="eliminarCuenta(usuario)">Eliminar</button></div></td></tr>
+            <tr v-for="(usuario, indice) in usuariosPaginados" :key="usuario.id"><td>{{ (paginaUsuarios - 1) * serviciosPorPagina + indice + 1 }}</td><td><div class="producto"><span class="sin-foto">{{ iniciales(usuario.nombre) }}</span><strong>{{ usuario.nombre }}</strong></div></td><td>{{ usuario.correo }}</td><td><span class="etiqueta-categoria" :class="`rol-${usuario.rol}`">{{ etiquetaRol(usuario.rol) }}</span></td><td><span class="etiqueta-categoria" :class="usuario.estado === 'Activo' ? 'estado-activo' : 'estado-inactivo'">{{ usuario.estado }}</span></td><td><div class="acciones"><button type="button" aria-label="Editar usuario" :disabled="usuario.correo === props.user?.email || usuarioCorreoEsAdmin(usuario) && usuario.correo !== props.user?.email" @click="editarCuenta(usuario)">Editar</button><button type="button" class="eliminar" aria-label="Eliminar usuario" :disabled="usuario.correo === props.user?.email || usuarioCorreoEsAdmin(usuario)" @click="eliminarCuenta(usuario)">Eliminar</button></div></td></tr>
           </tbody></table></div>
           <div class="pie-tabla">
             <span>Mostrando {{ usuariosFiltrados.length ? (paginaUsuarios - 1) * serviciosPorPagina + 1 : 0 }} - {{ Math.min(paginaUsuarios * serviciosPorPagina, usuariosFiltrados.length) }} de {{ usuariosFiltrados.length }} usuarios</span>
