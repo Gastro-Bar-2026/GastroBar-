@@ -1,7 +1,7 @@
 const Servicio = require('../models/servicio');
 
 // Campos que el cliente puede enviar; evita inyectar _id, timestamps, etc.
-const CAMPOS_PERMITIDOS = ['nombre', 'descripcion', 'precio', 'categoria', 'disponible'];
+const CAMPOS_PERMITIDOS = ['nombre', 'descripcion', 'precio', 'categoria', 'ingredientes', 'imagen', 'disponible'];
 
 const filtrarCampos = (body = {}) => {
   return CAMPOS_PERMITIDOS.reduce((acc, campo) => {
@@ -13,14 +13,14 @@ const filtrarCampos = (body = {}) => {
 // Crear servicio
 exports.crearServicio = async (req, res) => {
   try {
-    const { nombre, descripcion, precio, categoria, disponible } = req.body;
+    const { nombre, descripcion, precio, categoria, ingredientes, imagen, disponible } = req.body;
     if (!nombre || precio === undefined || !categoria) {
       return res.status(400).json({ mensaje: 'Nombre, precio y categoría son obligatorios' });
     }
     if (typeof precio !== 'number' || Number.isNaN(precio) || precio < 0) {
       return res.status(400).json({ mensaje: 'El precio debe ser un número mayor o igual a 0' });
     }
-    const nuevoServicio = new Servicio({ nombre, descripcion, precio, categoria, disponible });
+    const nuevoServicio = new Servicio({ nombre, descripcion, precio, categoria, ingredientes, imagen, disponible });
     await nuevoServicio.save();
     res.status(201).json(nuevoServicio);
   } catch (error) {

@@ -10,6 +10,8 @@ const servicioSchema = new mongoose.Schema(
       required: true,
       enum: ['Coctelería', 'Bebidas', 'Comida', 'Reserva de Mesa', 'Evento Especial', 'Otro']
     },
+    ingredientes: [{ type: String, trim: true }],
+    imagen: { type: String, default: '' },
     disponible: { type: Boolean, default: true }
   },
   { timestamps: true }

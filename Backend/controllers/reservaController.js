@@ -16,19 +16,30 @@ exports.crearReserva = async (req, res) => {
     if (!servicio || !fecha) {
       return res.status(400).json({ mensaje: 'El servicio y la fecha son campos requeridos' });
     }
+    const fechaReserva = new Date(fecha);
+    if (Number.isNaN(fechaReserva.getTime()) || fechaReserva <= new Date()) {
+      return res.status(400).json({ mensaje: 'La fecha de la reserva debe ser futura' });
+    }
+    if (numeroPersonas !== undefined && (!Number.isInteger(Number(numeroPersonas)) || Number(numeroPersonas) < 1 || Number(numeroPersonas) > 20)) {
+      return res.status(400).json({ mensaje: 'El número de personas debe estar entre 1 y 20' });
+    }
 
     // Validamos que el servicio seleccionado exista en la base de datos
     const servicioExiste = await Servicio.findById(servicio);
     if (!servicioExiste) {
       return res.status(404).json({ mensaje: 'El servicio seleccionado no existe' });
     }
+    if (!servicioExiste.disponible) {
+      return res.status(400).json({ mensaje: 'El servicio seleccionado no está disponible' });
+    }
 
     // Creamos la nueva reserva
     const nuevaReserva = new Reserva({
       usuario: usuarioId,
       servicio,
-      fecha: new Date(fecha),
+      fecha: fechaReserva,
       numeroPersonas: numeroPersonas || 1,
+      estado: 'confirmada',
       notas
     });
 
@@ -109,9 +120,22 @@ exports.actualizarReserva = async (req, res) => {
       reserva.fecha = fechaNueva;
     }
 
-    if (numeroPersonas) reserva.numeroPersonas = numeroPersonas;
+    if (numeroPersonas !== undefined) {
+      if (!Number.isInteger(Number(numeroPersonas)) || Number(numeroPersonas) < 1 || Number(numeroPersonas) > 20) {
+        return res.status(400).json({ mensaje: 'El número de personas debe estar entre 1 y 20' });
+      }
+      reserva.numeroPersonas = Number(numeroPersonas);
+    }
     if (notas !== undefined) reserva.notas = notas;
-    if (estado) reserva.estado = estado; // ej: 'confirmada', 'cancelada'
+    if (estado !== undefined) {
+      if (!esAdmin) {
+        return res.status(403).json({ mensaje: 'Solo un administrador puede cambiar el estado de la reserva' });
+      }
+      if (!['pendiente', 'confirmada', 'cancelada'].includes(estado)) {
+        return res.status(400).json({ mensaje: 'El estado de la reserva no es válido' });
+      }
+      reserva.estado = estado;
+    }
 
     await reserva.save();
 
