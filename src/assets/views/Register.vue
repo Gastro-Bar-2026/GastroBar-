@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-const emit = defineEmits(['register', 'go-login', 'go-home'])
+const emit = defineEmits(['authenticate', 'go-login', 'go-home'])
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -15,7 +15,7 @@ function submit() {
   if (password.value !== confirmation.value) { error.value = 'Las contraseñas no coinciden.'; return }
   busy.value = true
   setTimeout(() => {
-    emit('register', { email: email.value.trim().toLowerCase(), name: name.value.trim(), role: 'customer' })
+    emit('authenticate', { email: email.value.trim().toLowerCase(), name: name.value.trim(), role: 'customer', registered: true })
     busy.value = false
   }, 300)
 }

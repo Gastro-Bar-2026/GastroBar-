@@ -14,6 +14,9 @@ const authenticated = ref(false)
 const currentUser = ref(null)
 const afterLogin = ref('home')
 const reservations = ref([])
+try { const savedReservations = JSON.parse(localStorage.getItem('gastrobar-reservations') || '[]'); reservations.value = Array.isArray(savedReservations) ? savedReservations : [] } catch { reservations.value = [] }
+const users = ref([])
+try { const savedUsers = JSON.parse(localStorage.getItem('gastrobar-admin-users') || '[]'); users.value = Array.isArray(savedUsers) ? savedUsers.filter(account => account.registered === true) : [] } catch { users.value = [] }
 
 function openLogin(destination = 'home') {
   afterLogin.value = destination
@@ -28,9 +31,15 @@ function navigate(destination) {
 }
 
 function authenticate(user) {
+  if (user.registered) {
+    const existingIndex = users.value.findIndex(account => account.email === user.email)
+    if (existingIndex >= 0) users.value[existingIndex] = user
+    else users.value.push(user)
+    localStorage.setItem('gastrobar-admin-users', JSON.stringify(users.value))
+  }
   authenticated.value = true
   currentUser.value = user
-  view.value = afterLogin.value
+  view.value = user.role === 'admin' ? 'admin' : afterLogin.value
 }
 
 function logout() {
@@ -47,6 +56,7 @@ function createReservation(details) {
     ...details,
     status: 'Pendiente'
   })
+  localStorage.setItem('gastrobar-reservations', JSON.stringify(reservations.value))
   view.value = 'home'
 }
 </script>
@@ -58,5 +68,5 @@ function createReservation(details) {
   <Menu v-else-if="view === 'menu'" :authenticated="authenticated" :user="currentUser" @navigate="navigate" @logout="logout" />
   <Contact v-else-if="view === 'contact'" :authenticated="authenticated" :user="currentUser" @navigate="navigate" @logout="logout" />
   <Reservations v-else-if="view === 'reservations'" :user="currentUser" :authenticated="authenticated" @navigate="navigate" @logout="logout" @submit-reservation="createReservation" />
-  <Dashboard v-else-if="view === 'admin'" :user="currentUser" :reservations="reservations" @navigate="navigate" @logout="logout" />
+  <Dashboard v-else-if="view === 'admin'" :user="currentUser" :reservations="reservations" :users="users" @navigate="navigate" @logout="logout" />
 </template>

@@ -5,11 +5,11 @@ import SiteNav from './SiteNav.vue'
 const props = defineProps({ authenticated: Boolean, user: Object })
 const emit = defineEmits(['navigate', 'logout'])
 const drinks = ref([
-  { id: 1, name: 'BOGEMA BAR', image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=85', description: 'CÃ³cteles de autor preparados para disfrutar sin prisa.' },
+  { id: 1, name: 'BOGEMA BAR', image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=85', description: 'Cócteles de autor preparados para disfrutar sin prisa.' },
   { id: 2, name: 'NEGRONI NEBULA', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=85', description: 'Una mezcla intensa, equilibrada y memorable.' },
-  { id: 3, name: 'GOLDEN AURA', image: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=1200&q=85', description: 'Notas cÃ¡lidas para acompaÃ±ar una buena conversaciÃ³n.' },
-  { id: 4, name: 'OBSIDIAN VELVET', image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=1200&q=85', description: 'Una experiencia suave con carÃ¡cter propio.' },
-  { id: 5, name: 'NOCTURNE PRIVÃ‰', image: 'https://images.unsplash.com/photo-1574096079513-d8259312b785?auto=format&fit=crop&w=1200&q=85', description: 'El sabor perfecto para cerrar la noche.' }
+  { id: 3, name: 'GOLDEN AURA', image: 'https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&w=1200&q=85', description: 'Notas cálidas para acompañar una buena conversación.' },
+  { id: 4, name: 'OBSIDIAN VELVET', image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?auto=format&fit=crop&w=1200&q=85', description: 'Una experiencia suave con carácter propio.' },
+  { id: 5, name: 'NOCTURNE PRIVÉ', image: 'https://images.unsplash.com/photo-1574096079513-d8259312b785?auto=format&fit=crop&w=1200&q=85', description: 'El sabor perfecto para cerrar la noche.' }
 ])
 const activeIndex = ref(0)
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200)
@@ -119,7 +119,7 @@ onUnmounted(() => {
   <section id="sobre-nosotros" class="veloris-editorial-section">
     <div class="veloris-editorial-card">
       <div class="veloris-editorial-gallery">
-        <div class="veloris-photo-primary-frame"><img class="veloris-photo-img" src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop" alt="CÃ³ctel artesanal servido en la barra"></div>
+        <div class="veloris-photo-primary-frame"><img class="veloris-photo-img" src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1200&auto=format&fit=crop" alt="Cóctel artesanal servido en la barra"></div>
         <div class="veloris-photo-secondary-frame"><img class="veloris-photo-img" src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=1000&auto=format&fit=crop" alt="Mesa preparada para compartir"></div>
       </div>
       <div class="veloris-editorial-content">
@@ -128,14 +128,15 @@ onUnmounted(() => {
           <span class="veloris-title-row-2"><span class="serif-italic">hechos para</span><span class="serif-bold uppercase">COMPARTIR</span></span>
         </h2>
         <div class="veloris-editorial-tagline">SABORES DE AUTOR CREADOS PARA COMPARTIR</div>
-        <p class="veloris-editorial-body">CÃ³cteles de autor y platillos selectos se encuentran en una propuesta de temporada, hecha para degustarse sin prisa.</p>
-        <p class="veloris-editorial-quote">Una copa, buena compaÃ±Ã­a y toda la velada por delante.</p>
+        <p class="veloris-editorial-body">Cócteles de autor y platillos selectos se encuentran en una propuesta de temporada, hecha para degustarse sin prisa.</p>
+        <p class="veloris-editorial-quote">Una copa, buena compañía y toda la velada por delante.</p>
         <div class="veloris-editorial-badges">
-          <span class="veloris-badge-item">CoctelerÃ­a de colecciÃ³n</span>
+          <span class="veloris-badge-item">Coctelería de colección</span>
           <span class="veloris-badge-item">Cocina de temporada</span>
-          <span class="veloris-badge-item">Ambiente Ã­ntimo</span>
+          <span class="veloris-badge-item">Ambiente íntimo</span>
         </div>
       </div>
     </div>
   </section>
 </template>
+
