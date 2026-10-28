@@ -41,29 +41,6 @@ Las rutas protegidas esperan el header `Authorization: Bearer <token>`.
 > Compatibilidad: las rutas equivalentes bajo `/api/usuarios/register` y
 > `/api/usuarios/login` siguen activas.
 
-## Dashboard
-
-- `GET /api/Dashboard/stats` — devuelve los totales de usuarios (total,
-  clientes y administradores) y servicios (total, disponibles y no disponibles).
-- Requiere un token Bearer de un usuario con rol `admin`.
-
-Ejemplo de respuesta:
-
-```json
-{
-  "usuarios": {
-    "total": 12,
-    "clientes": 10,
-    "administradores": 2
-  },
-  "servicios": {
-    "total": 8,
-    "disponibles": 6,
-    "noDisponibles": 2
-  }
-}
-```
-
 La API escucha en `http://localhost:3000` por defecto. La ruta `/health` informa
 si MongoDB está conectado; las rutas `/api` responden `503` hasta que la base de
 datos esté disponible.
