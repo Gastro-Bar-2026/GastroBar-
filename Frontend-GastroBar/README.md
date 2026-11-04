@@ -1,25 +1,67 @@
-# GastroBar Frontend
+# GastroBar — Frontend
 
-## Conectar con el backend
+Aplicación web de GastroBar desarrollada con Vue.js y Vite. Permite consultar
+el menú, conocer los eventos, realizar reservas y acceder a las herramientas de
+administración según el rol del usuario.
 
-El frontend usa la API de GastroBar. En desarrollo, Vite reenvía `/api` y
-`/health` a `http://localhost:3000`. Si el backend está en otra dirección,
-define `GASTROBAR_API_URL` antes de iniciar Vite o configura `VITE_API_URL`
-para una API accesible desde el navegador.
+## Requisitos
+
+- Node.js y npm.
+- MongoDB para ejecutar el backend.
 
 ## Inicio local
 
-1. Configura MongoDB y las variables de entorno en
-   `../Backend_yurley/.env` siguiendo las instrucciones del README del backend.
-2. En una terminal, inicia la API desde `../Backend_yurley` con `npm install`
-   y `npm start`.
-3. En otra terminal, inicia el frontend desde esta carpeta con `npm install`
-   y `npm run dev`.
-4. Abre la URL que muestra Vite (normalmente `http://localhost:5173`).
+1. Configura MongoDB y las variables de entorno del backend siguiendo las
+   instrucciones de `../Backend/README.md`.
+2. Desde `../Backend`, instala las dependencias con `npm install` e inicia la
+   API con `npm start`.
+3. Desde esta carpeta, instala las dependencias con `npm install` e inicia el
+   frontend con `npm run dev`.
+4. Abre en el navegador la dirección que indique Vite, normalmente
+   `http://localhost:5173`.
 
-El catálogo inicial se inserta en MongoDB la primera vez que se inicia la API.
-El registro crea cuentas de cliente; la cuenta administradora se configura
-mediante `ADMIN_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` del backend.
-En la página de inicio, la sección de eventos permite ir directamente al
-formulario de reservas. Un administrador puede iniciar sesión desde el menú:
-al autenticarse, la aplicación abre automáticamente el panel de administración.
+En desarrollo, Vite reenvía `/api` y `/health` al backend local. Configura
+`GASTROBAR_API_URL` si el backend se ejecuta en otra dirección. También se puede
+definir `VITE_API_URL` para conectar directamente con una API accesible desde
+el navegador.
+
+## Funcionalidades
+
+- Inicio, menú y detalles de productos.
+- Registro e inicio de sesión.
+- Reserva de mesa.
+- Sección de eventos y contacto.
+- Panel de administración para usuarios autorizados.
+
+El catálogo inicial se inserta en MongoDB al iniciar la API. El registro crea
+cuentas de cliente; las credenciales de administración se configuran mediante
+`ADMIN_NAME`, `ADMIN_EMAIL` y `ADMIN_PASSWORD` en el `.env` del backend. No
+almacenes secretos en variables `VITE_`, ya que quedan disponibles en el
+código del navegador.
+
+## Compilación
+
+```bash
+npm run build
+```
+
+Vite genera los archivos de producción en `dist`. Para previsualizarlos
+localmente:
+
+```bash
+npm run preview
+```
+
+## Despliegue en Render
+
+El frontend puede publicarse como un servicio **Static Site**:
+
+| Campo | Valor |
+|---|---|
+| Rama | `actualizacion-completa-backend-frontend` |
+| Root Directory | `Frontend-GastroBar` |
+| Build Command | `npm install && npm run build` |
+| Publish Directory | `dist` |
+
+Configura `VITE_API_URL` con la URL pública del backend y permite el dominio del
+frontend en la configuración CORS del backend.
