@@ -1,6 +1,7 @@
 <script setup>
+import { api } from '../../api.js'
 import { ref } from 'vue'
-const emit = defineEmits(['register', 'go-login', 'go-home'])
+const emit = defineEmits(['authenticate', 'go-login', 'go-home'])
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -14,10 +15,16 @@ function submit() {
   if (password.value.length < 6) { error.value = 'La contraseña debe tener al menos 6 caracteres.'; return }
   if (password.value !== confirmation.value) { error.value = 'Las contraseñas no coinciden.'; return }
   busy.value = true
-  setTimeout(() => {
-    emit('register', { email: email.value.trim().toLowerCase(), name: name.value.trim(), password: password.value, role: 'customer', registered: true })
-    busy.value = false
-  }, 300)
+  api.register({
+    nombre: name.value.trim(),
+    correo: email.value.trim().toLowerCase(),
+    contraseña: password.value
+  })
+    .then(response => emit('authenticate', response))
+    .catch(cause => { error.value = cause.message })
+    .finally(() => {
+      busy.value = false
+    })
 }
 </script>
 <template>

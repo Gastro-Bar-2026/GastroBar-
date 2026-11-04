@@ -1,7 +1,7 @@
 <template>
   <div class="menu-component-root">
     <!-- Barra superior mantenida también dentro de la vista del menú -->
-    <SiteNav active="menu" :authenticated="authenticated" :role="user?.role" @navigate="emit('navigate', $event)" @logout="emit('logout')" />
+    <SiteNav active="menu" :authenticated="props.authenticated" :role="props.user?.role" @navigate="emit('navigate', $event)" @logout="emit('logout')" />
 
     <!-- =========================================================================
          SECCIÓN DEL MENÚ (ENCABEZADO + FILTROS + TARJETAS FLYER "WHISKY NIGHT")
@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      <!-- Cuadrícula de 3 columnas: Tarjetas con diseño exacto del flyer WHISKY NIGHT -->
+      <!-- Cuadrícula de productos; los ingredientes se consultan en los detalles. -->
       <div class="tri-grid-container">
         <article
           v-for="product in filteredProducts"
@@ -126,23 +126,34 @@
             <!-- Columna Derecha: Botella iluminada sobre la barra de madera -->
             <div class="flyer-col-right">
               <img
+                v-if="product.cardImage"
                 :src="product.cardImage"
                 :alt="product.name"
                 class="flyer-bottle-hero-img"
                 loading="lazy"
               />
+              <div v-else class="flyer-image-placeholder" aria-hidden="true">
+                <span>{{ product.categoryLabel }}</span>
+                <strong>{{ product.name }}</strong>
+              </div>
               <div class="flyer-bottle-halo"></div>
               <div class="flyer-bottle-inner-shadow"></div>
 
               <!-- Indicador interactivo para abrir la tarjeta flotante -->
-              <div class="flyer-action-hint">
+              <button
+                type="button"
+                class="flyer-action-hint"
+                :aria-label="`Ver detalles de ${product.name}`"
+                @click.stop="openModal(product)"
+              >
                 <span>VER DETALLES</span>
-                
-              </div>
+              </button>
             </div>
           </div>
         </article>
       </div>
+      <p v-if="props.catalogError" class="menu-lead-text" role="alert">{{ props.catalogError }}</p>
+      <p v-else-if="!filteredProducts.length" class="menu-lead-text">Pronto agregaremos nuevos productos a nuestro menú.</p>
     </section>
 
     <!-- =========================================================================
@@ -151,6 +162,7 @@
     <div
       v-if="isModalOpen && selectedProduct"
       class="prosandoval-overlay"
+      :style="{ '--product-detail-image': selectedProduct.cardImage ? `url('${selectedProduct.cardImage}')` : 'none' }"
       @click.self="closeModal"
     >
       <div class="prosandoval-card" role="dialog" aria-modal="true">
@@ -172,20 +184,27 @@
             <div class="prosandoval-white-divider"></div>
 
             <p class="prosandoval-description-para">{{ selectedProduct.description }}</p>
-            <h3 class="product-ingredients-title">Ingredientes</h3>
-            <p class="prosandoval-description-para">{{ selectedProduct.ingredients || selectedProduct.description }}</p>
+            <template v-if="selectedProduct.ingredients.length">
+              <h3 class="product-ingredients-title">Ingredientes</h3>
+              <p class="prosandoval-description-para">{{ selectedProduct.ingredients.join(', ') }}</p>
+            </template>
 
             <div class="prosandoval-price-val">{{ selectedProduct.price }}</div>
-</div>
+          </div>
 
           <!-- Columna Derecha: Botella Inclinada 3D -->
           <div class="prosandoval-bottle-col">
             <div class="prosandoval-tilted-wrap">
               <img
-                :src="selectedProduct.bottleImage || selectedProduct.cardImage"
+                v-if="selectedProduct.bottleImage"
+                :src="selectedProduct.bottleImage"
                 :alt="selectedProduct.name"
                 class="prosandoval-bottle-img"
               />
+              <div v-else class="prosandoval-image-placeholder">
+                <span>{{ selectedProduct.categoryLabel }}</span>
+                <strong>{{ selectedProduct.name }}</strong>
+              </div>
               <div class="prosandoval-amber-halo"></div>
             </div>
           </div>
@@ -200,23 +219,57 @@ import { ref, computed } from 'vue'
 import SiteNav from './SiteNav.vue'
 import { defaultMenuProducts } from './menuData.js'
 
-defineProps({ authenticated: Boolean, user: Object })
+const props = defineProps({
+  authenticated: Boolean,
+  user: Object,
+  services: { type: Array, default: () => [] },
+  catalogError: { type: String, default: '' }
+})
 const emit = defineEmits(['navigate', 'logout'])
 
 const isModalOpen = ref(false)
 const selectedProduct = ref(null)
 const activeFilter = ref('todos')
 
-const menuProducts = ref(loadCatalog())
+const menuProducts = computed(() => props.services
+  .filter(service => service.disponible && service.categoria !== 'Reserva de Mesa')
+  .map(service => {
+    const reference = defaultMenuProducts.find(product => product.name.toLocaleLowerCase('es') === service.nombre.toLocaleLowerCase('es'))
+    const categoryType = service.categoria === 'Comida' ? 'comida' : 'bebida'
+    return {
+      id: service._id,
+      name: service.nombre,
+      categoryType,
+      categoryLabel: service.categoria.toLocaleUpperCase('es'),
+      ingredients: normalizeIngredients(service.ingredientes),
+      price: new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(service.precio),
+      description: service.descripcion,
+      cardImage: service.imagen || reference?.cardImage || '',
+      bottleImage: service.imagen || reference?.bottleImage || '',
+      flyerGlass: reference?.cardImage || '',
+      clubName: 'GASTROBAR',
+      flyerSubtitle: service.categoria.toLocaleUpperCase('es'),
+      flyerTagline: reference?.flyerTagline || (categoryType === 'comida' ? 'PARA COMPARTIR' : 'BRINDEMOS JUNTOS'),
+      address: reference?.address || 'GASTROBAR'
+    }
+  }))
 
-function loadCatalog() {
+function normalizeIngredients(value) {
+  if (Array.isArray(value)) {
+    return value.flatMap(ingredient => normalizeIngredients(ingredient))
+  }
+  if (typeof value !== 'string' || !value.trim()) return []
+
+  const text = value.trim()
   try {
-    const saved = JSON.parse(localStorage.getItem('gastrobar-admin-products') || 'null')
-    if (Array.isArray(saved)) return saved
-  } catch {}
-  return defaultMenuProducts
+    const parsed = JSON.parse(text)
+    if (Array.isArray(parsed)) return normalizeIngredients(parsed)
+    if (typeof parsed === 'string' && parsed !== text) return normalizeIngredients(parsed)
+  } catch {
+    return text.split(',').map(ingredient => ingredient.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+  }
+  return [text]
 }
-
 
 const filteredProducts = computed(() => {
   if (activeFilter.value === 'todos') return menuProducts.value

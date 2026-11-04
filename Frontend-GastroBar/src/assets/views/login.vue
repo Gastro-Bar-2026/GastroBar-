@@ -1,8 +1,6 @@
 <script setup>
+import { api } from '../../api.js'
 import { ref } from 'vue'
-const props = defineProps({
-  accounts: { type: Array, default: () => [] }
-})
 const emit = defineEmits(['authenticate', 'go-register', 'go-home'])
 const email = ref('')
 const password = ref('')
@@ -14,34 +12,12 @@ function submit() {
   if (!email.value.trim() || !email.value.includes('@')) { error.value = 'Escribe un correo electrónico válido.'; return }
   if (!password.value) { error.value = 'Escribe tu contraseña.'; return }
   busy.value = true
-  setTimeout(() => {
-    const normalizedEmail = email.value.trim().toLowerCase()
-    const account = props.accounts.find(item => item.email === normalizedEmail)
-    if (!account) {
+  api.login({ correo: email.value.trim().toLowerCase(), contraseña: password.value })
+    .then(response => emit('authenticate', response))
+    .catch(cause => { error.value = cause.message })
+    .finally(() => {
       busy.value = false
-      error.value = 'No existe una cuenta con este correo. Regístrate primero.'
-      return
-    }
-    if (!account.password || account.password !== password.value) {
-      busy.value = false
-      error.value = account.password
-        ? 'Contraseña incorrecta. Inténtalo de nuevo.'
-        : 'Esta cuenta no tiene contraseña registrada. Regístrate de nuevo.'
-      return
-    }
-    if (account.estado === 'Inactivo') {
-      busy.value = false
-      error.value = 'Esta cuenta está inactiva. Contacta al administrador.'
-      return
-    }
-    emit('authenticate', {
-      email: normalizedEmail,
-      name: account.name || account.nombre || normalizedEmail.split('@')[0],
-      password: account.password,
-      role: account.role || account.rol || 'customer'
     })
-    busy.value = false
-  }, 300)
 }
 </script>
 <template>
@@ -59,7 +35,6 @@ function submit() {
         <button class="veloris-btn-gold-submit" type="submit" :disabled="busy">{{ busy ? 'PROCESANDO…' : 'INICIAR SESIÓN' }}</button>
       </form>
       <p class="auth-switch-copy">¿No tienes cuenta? <button class="veloris-toggle-action" type="button" @click="emit('go-register')">Crear cuenta</button></p>
-      <p class="auth-demo-note">Solo puedes entrar con una cuenta ya registrada.</p>
     </section>
   </main>
 </template>

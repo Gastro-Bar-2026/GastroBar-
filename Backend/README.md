@@ -16,10 +16,12 @@
    con credenciales predeterminadas. Si la cuenta ya existe, no se modifica.
 5. Instala e inicia el backend: `npm install` y `npm start`.
 
-El servidor escucha en `http://localhost:3000`. En el primer inicio inserta un
-catálogo inicial si todavía no hay servicios. Las rutas `/api` requieren una
-conexión activa con MongoDB. La ruta `/health` informa el estado de la API y la
-base de datos.
+El servidor escucha en `http://localhost:3000`. En el primer inicio completa
+el catálogo inicial con los productos que falten, sin sobrescribir ni borrar
+servicios existentes. La carga incremental se ejecuta una vez por versión del
+catálogo.
+Las rutas `/api` requieren una conexión activa con MongoDB. La ruta `/health`
+informa el estado de la API y la base de datos.
 
 ## API principal
 

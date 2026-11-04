@@ -1,11 +1,9 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
-import { defaultMenuProducts } from './menuData.js'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { api } from '../../api.js'
 
 const props = defineProps({
-  user: { type: Object, default: () => ({}) },
-  reservations: { type: Array, default: () => [] },
-  users: { type: Array, default: () => [] }
+  user: { type: Object, default: () => ({}) }
 })
 const emit = defineEmits(['logout'])
 const section = ref('reservas')
@@ -13,8 +11,12 @@ const query = ref('')
 const statusFilter = ref('Todas')
 const page = ref(1)
 const pageSize = 5
-const productKey = 'gastrobar-admin-products'
 const products = ref([])
+const reservations = ref([])
+const users = ref([])
+const dashboardStats = ref(null)
+const loading = ref(true)
+const loadError = ref('')
 const form = ref(emptyForm())
 const editingId = ref(null)
 const productFormSection = ref(null)
@@ -22,41 +24,88 @@ const notice = ref('')
 const pendingDelete = ref(null)
 
 function emptyForm() { return { name: '', category: 'Bebida', price: '', description: '', ingredients: '', image: '' } }
-function loadProducts() {
-  try {
-    const saved = localStorage.getItem(productKey)
-    products.value = saved === null ? defaultMenuProducts.map(item => ({ ...item, category: item.categoryType === 'comida' ? 'Comida' : 'Bebida' })) : JSON.parse(saved)
-  } catch { products.value = defaultMenuProducts.map(item => ({ ...item, category: item.categoryType === 'comida' ? 'Comida' : 'Bebida' })) }
+function formatPrice(price) {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price)
 }
-function saveProducts() {
-  try { localStorage.setItem(productKey, JSON.stringify(products.value)); return true }
-  catch { notice.value = 'No se pudo guardar. Prueba con una imagen m\u00e1s peque\u00f1a.'; return false }
-}
-function saveProduct() {
-  notice.value = ''
-  if (!form.value.name.trim() || !form.value.price.trim()) { notice.value = 'Completa el nombre y el precio.'; return }
-  const action = editingId.value !== null ? 'actualizado' : 'agregado'
-  const existing = products.value.find(item => item.id === editingId.value)
-  const categoryType = form.value.category === 'Comida' ? 'comida' : 'bebida'
-  const product = {
-    ...existing,
-    ...form.value,
-    id: editingId.value ?? Date.now(),
-    categoryType,
-    categoryLabel: form.value.category.toLocaleUpperCase('es'),
-    ingredients: form.value.ingredients.split(',').map(item => item.trim()).filter(Boolean),
-    clubName: 'GASTROBAR',
-    flyerSubtitle: form.value.category.toLocaleUpperCase('es'),
-    flyerTagline: form.value.description || 'Producto de la casa',
-    cardImage: form.value.image || existing?.cardImage || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=85',
-    bottleImage: form.value.image || existing?.bottleImage || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=800&q=85',
-    flyerGlass: existing?.flyerGlass || 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=400&q=80'
+function mapProduct(service) {
+  return {
+    id: service._id,
+    name: service.nombre,
+    category: service.categoria === 'Comida' ? 'Comida' : service.categoria === 'Coctelería' ? 'Coctelería' : 'Bebida',
+    price: formatPrice(service.precio),
+    rawPrice: service.precio,
+    description: service.descripcion || '',
+    ingredients: service.ingredientes || [],
+    cardImage: service.imagen || ''
   }
-  if (editingId.value !== null) products.value = products.value.map(item => item.id === editingId.value ? product : item)
-  else products.value.unshift(product)
-  if (!saveProducts()) return
-  cancelEdit()
-  notice.value = `Producto ${action} correctamente.`
+}
+function mapReservation(reservation) {
+  const date = new Date(reservation.fecha)
+  return {
+    id: reservation._id,
+    customer: reservation.usuario?.nombre || 'Cliente',
+    email: reservation.usuario?.correo || '',
+    date: date.toLocaleDateString('es-CO'),
+    time: date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+    guests: reservation.numeroPersonas,
+    notes: reservation.notas || '',
+    status: reservation.estado.charAt(0).toLocaleUpperCase('es') + reservation.estado.slice(1)
+  }
+}
+async function loadDashboard() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const [reservationResult, accounts, catalog, summary] = await Promise.all([
+      api.getReservations(),
+      api.getUsers(),
+      api.getServices(),
+      api.getDashboardStats()
+    ])
+    reservations.value = reservationResult.reservas.map(mapReservation)
+    users.value = accounts.map(account => ({
+      id: account._id,
+      name: account.nombre,
+      email: account.correo,
+      role: account.rol
+    }))
+    products.value = catalog.filter(service => service.categoria !== 'Reserva de Mesa').map(mapProduct)
+    dashboardStats.value = summary
+  } catch (error) {
+    loadError.value = error.message
+  } finally {
+    loading.value = false
+  }
+}
+async function saveProduct() {
+  notice.value = ''
+  const precio = Number(form.value.price)
+  if (!form.value.name.trim() || !Number.isFinite(precio) || precio < 0) {
+    notice.value = 'Completa el nombre y escribe un precio válido.'
+    return
+  }
+  const data = {
+    nombre: form.value.name.trim(),
+    categoria: form.value.category === 'Comida' ? 'Comida' : form.value.category === 'Coctelería' ? 'Coctelería' : 'Bebidas',
+    precio,
+    descripcion: form.value.description.trim(),
+    ingredientes: form.value.ingredients.split(',').map(item => item.trim()).filter(Boolean),
+    imagen: form.value.image
+  }
+  try {
+    const wasEditing = editingId.value !== null
+    const service = wasEditing
+      ? await api.updateService(editingId.value, data)
+      : await api.createService(data)
+    const product = mapProduct(service)
+    products.value = wasEditing
+      ? products.value.map(item => item.id === product.id ? product : item)
+      : [product, ...products.value]
+    cancelEdit()
+    notice.value = `Producto ${wasEditing ? 'actualizado' : 'agregado'} correctamente.`
+  } catch (error) {
+    notice.value = error.message
+  }
 }
 function editProduct(product) {
   notice.value = ''
@@ -64,7 +113,7 @@ function editProduct(product) {
   form.value = {
     name: product.name || '',
     category: product.category || (product.categoryType === 'comida' ? 'Comida' : 'Bebida'),
-    price: product.price || '',
+    price: String(product.rawPrice ?? ''),
     description: product.description || '',
     ingredients: Array.isArray(product.ingredients) ? product.ingredients.join(', ') : (product.ingredients || ''),
     image: product.cardImage || ''
@@ -74,12 +123,17 @@ function editProduct(product) {
 function deleteProduct(id) {
   pendingDelete.value = products.value.find(item => item.id === id) || null
 }
-function confirmDelete() {
+async function confirmDelete() {
   if (!pendingDelete.value) return
-  products.value = products.value.filter(item => item.id !== pendingDelete.value.id)
-  if (!saveProducts()) { pendingDelete.value = null; return }
-  notice.value = 'Producto eliminado correctamente.'
-  pendingDelete.value = null
+  notice.value = ''
+  try {
+    await api.deleteService(pendingDelete.value.id)
+    products.value = products.value.filter(item => item.id !== pendingDelete.value.id)
+    notice.value = 'Producto eliminado correctamente.'
+    pendingDelete.value = null
+  } catch (error) {
+    notice.value = error.message
+  }
 }
 function cancelEdit() { editingId.value = null; form.value = emptyForm() }
 function handleImageUpload(event) {
@@ -96,7 +150,9 @@ function handleImageUpload(event) {
       const canvas = document.createElement('canvas')
       canvas.width = Math.max(1, Math.round(image.width * scale))
       canvas.height = Math.max(1, Math.round(image.height * scale))
-      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height)
+      const context = canvas.getContext('2d')
+      if (!context) { notice.value = 'No se pudo procesar la imagen seleccionada.'; return }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
       form.value.image = canvas.toDataURL('image/jpeg', 0.82)
       notice.value = 'Imagen cargada. Guarda los cambios para aplicarla.'
     }
@@ -106,7 +162,7 @@ function handleImageUpload(event) {
 }
 const filteredReservations = computed(() => {
   const term = query.value.trim().toLocaleLowerCase('es')
-  return props.reservations.filter(item => {
+  return reservations.value.filter(item => {
     const matchesTerm = !term || `${item.customer || ''} ${item.email || ''}`.toLocaleLowerCase('es').includes(term)
     const matchesStatus = statusFilter.value === 'Todas' || item.status === statusFilter.value
     return matchesTerm && matchesStatus
@@ -114,17 +170,22 @@ const filteredReservations = computed(() => {
 })
 const pageCount = computed(() => Math.max(1, Math.ceil(filteredReservations.value.length / pageSize)))
 const pagedReservations = computed(() => filteredReservations.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-const visibleUsers = computed(() => props.users)
-const pendingCount = computed(() => props.reservations.filter(item => item.status === 'Pendiente').length)
-const confirmedCount = computed(() => props.reservations.filter(item => item.status === 'Confirmada').length)
+const visibleUsers = computed(() => users.value)
+const pendingCount = computed(() => reservations.value.filter(item => item.status === 'Pendiente').length)
+const confirmedCount = computed(() => reservations.value.filter(item => item.status === 'Confirmada').length)
 watch([query, statusFilter], () => { page.value = 1 })
 watch(pageCount, value => { if (page.value > value) page.value = value })
-function setStatus(reservation, status) {
-  reservation.status = status
-  localStorage.setItem('gastrobar-reservations', JSON.stringify(props.reservations))
+async function setStatus(reservation, status) {
+  notice.value = ''
+  try {
+    await api.updateReservation(reservation.id, { estado: status.toLocaleLowerCase('es') })
+    reservation.status = status
+  } catch (error) {
+    notice.value = error.message
+  }
 }
 function goTo(name) { section.value = name; query.value = ''; page.value = 1 }
-loadProducts()
+onMounted(loadDashboard)
 </script>
 
 <template>
@@ -155,11 +216,15 @@ loadProducts()
           <p class="admin-eyebrow">PANEL DE ADMINISTRACI&Oacute;N</p>
           <h1>Reservas</h1>
           <p class="admin-lead">Consulta las solicitudes y actualiza el estado de las reservas.</p>
+          <p v-if="dashboardStats" class="admin-lead">{{ dashboardStats.usuarios.total }} usuarios registrados · {{ dashboardStats.servicios.disponibles }} servicios disponibles</p>
           <section class="admin-stats" aria-label="Resumen de reservas">
-            <article><span>Total</span><strong>{{ props.reservations.length }}</strong></article>
+            <article><span>Total</span><strong>{{ reservations.length }}</strong></article>
             <article><span>Pendientes</span><strong>{{ pendingCount }}</strong></article>
             <article><span>Confirmadas</span><strong>{{ confirmedCount }}</strong></article>
           </section>
+          <p v-if="loading" class="admin-feedback" role="status">Cargando datos desde el servidor…</p>
+          <p v-if="loadError" class="admin-feedback" role="alert">{{ loadError }}</p>
+          <p v-if="notice" class="admin-feedback" role="status">{{ notice }}</p>
           <section class="admin-reservation-panel">
             <div class="admin-panel-heading"><div><h2>Reservas registradas</h2><p>Revisa las solicitudes y actualiza su estado.</p></div>
               <label class="admin-filter">Estado<select v-model="statusFilter"><option>Todas</option><option>Pendiente</option><option>Confirmada</option><option>Cancelada</option></select></label>
@@ -182,12 +247,14 @@ loadProducts()
         <template v-else-if="section === 'productos'">
           <p class="admin-eyebrow">PANEL DE ADMINISTRACI&Oacute;N</p><h1>Productos</h1>
           <p class="admin-lead">Agrega y actualiza los productos del cat&aacute;logo.</p>
+          <p v-if="loading" class="admin-feedback" role="status">Cargando datos desde el servidor…</p>
+          <p v-if="loadError" class="admin-feedback" role="alert">{{ loadError }}</p>
           <section ref="productFormSection" class="admin-reservation-panel">
             <div class="admin-panel-heading"><div><h2>{{ editingId === null ? 'Agregar producto' : 'Editar producto' }}</h2><p>Completa los datos del producto.</p></div></div>
             <form class="admin-product-form" @submit.prevent="saveProduct">
               <label>Nombre<input v-model="form.name" required maxlength="80"></label>
-              <label>Tipo<select v-model="form.category"><option>Bebida</option><option>Comida</option><option>Botella</option><option>Botella</option></select></label>
-              <label>Precio<input v-model="form.price" required placeholder="$ 25.000 COP"></label>
+              <label>Tipo<select v-model="form.category"><option>Bebida</option><option>Coctelería</option><option>Comida</option></select></label>
+              <label>Precio (COP)<input v-model="form.price" type="number" min="0" step="1" required placeholder="25000"></label>
               <label class="form-wide">Subir imagen desde el dispositivo<input type="file" accept="image/*" @change="handleImageUpload"></label>
               <img v-if="form.image" class="admin-product-preview" :src="form.image" alt="Vista previa del producto">
               <p v-if="notice" class="admin-feedback" role="status">{{ notice }}</p>
@@ -205,6 +272,8 @@ loadProducts()
         <template v-else>
           <p class="admin-eyebrow">PANEL DE ADMINISTRACI&Oacute;N</p><h1>Usuarios</h1>
           <p class="admin-lead">Consulta las cuentas registradas en esta sesi&oacute;n.</p>
+          <p v-if="loading" class="admin-feedback" role="status">Cargando datos desde el servidor…</p>
+          <p v-if="loadError" class="admin-feedback" role="alert">{{ loadError }}</p>
           <section class="admin-reservation-panel"><div class="admin-panel-heading"><div><h2>Usuarios registrados</h2><p>{{ visibleUsers.length }} usuarios</p></div></div>
             <div v-if="!visibleUsers.length" class="admin-empty">Todav&iacute;a no hay usuarios registrados.</div>
             <div v-else class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Nombre</th><th>Correo electr&oacute;nico</th><th>Rol</th><th>Estado</th></tr></thead><tbody>

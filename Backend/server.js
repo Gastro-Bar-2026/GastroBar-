@@ -8,6 +8,7 @@ const servicioRoutes = require('./routes/servicioRoutes');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const reservaRoutes = require('./routes/reservaRoutes');
+const seedInitialCatalog = require('./seedInitialCatalog');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -55,21 +56,9 @@ app.use('/api/Dashboard', dashboardRoutes);
 app.use('/api/reservas', reservaRoutes);
 
 async function seedInitialData() {
-  const Servicio = require('./models/servicio');
   const Usuario = require('./models/usuario');
 
-  if (await Servicio.countDocuments() === 0) {
-    await Servicio.insertMany([
-      { nombre: "JACK DANIEL'S", descripcion: 'Whisky Tennessee con notas de vainilla, caramelo y roble.', precio: 28000, categoria: 'Bebidas', ingredientes: ['Whisky', 'Vainilla', 'Caramelo'], disponible: true },
-      { nombre: 'JOHNNIE WALKER', descripcion: 'Whisky escocés con frutas maduras, vainilla y un final ahumado.', precio: 24000, categoria: 'Bebidas', ingredientes: ['Whisky', 'Frutos del bosque', 'Vainilla'], disponible: true },
-      { nombre: 'NEGRONI NEBULA', descripcion: 'Cóctel de ginebra, Campari y notas cítricas.', precio: 18000, categoria: 'Coctelería', ingredientes: ['Campari', 'Ginebra', 'Naranja'], disponible: true },
-      { nombre: 'ENTRECOT AL SARMIENTO', descripcion: 'Corte madurado a la parrilla con guarnición de temporada.', precio: 52000, categoria: 'Comida', ingredientes: ['Entrecot', 'Hierbas', 'Vegetales'], disponible: true },
-      { nombre: 'HAMBURGUESA BLACK ANGUS', descripcion: 'Hamburguesa de res Black Angus, queso, vegetales y salsa de la casa.', precio: 36000, categoria: 'Comida', ingredientes: ['Black Angus', 'Queso', 'Vegetales'], disponible: true },
-      { nombre: 'TABLA 100% BELLOTA', descripcion: 'Selección para compartir con productos curados y acompañamientos.', precio: 42000, categoria: 'Comida', ingredientes: ['Jamón curado', 'Quesos', 'Pan artesanal'], disponible: true },
-      { nombre: 'Reserva de Mesa', descripcion: 'Solicitud de reserva de mesa en GastroBar.', precio: 0, categoria: 'Reserva de Mesa', disponible: true }
-    ]);
-    console.log('Catálogo inicial de GastroBar creado.');
-  }
+  await seedInitialCatalog();
 
   const { ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
   if (ADMIN_NAME && ADMIN_EMAIL && ADMIN_PASSWORD) {
