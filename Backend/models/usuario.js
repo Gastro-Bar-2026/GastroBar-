@@ -13,15 +13,10 @@ const usuarioSchema = new mongoose.Schema(
 );
 
 // Hashea la contraseña automáticamente antes de guardar (solo si cambió)
-usuarioSchema.pre('save', async function (next) {
-  if (!this.isModified('contraseña')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.contraseña = await bcrypt.hash(this.contraseña, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
+usuarioSchema.pre('save', async function () {
+  if (!this.isModified('contraseña')) return;
+  const salt = await bcrypt.genSalt(10);
+  this.contraseña = await bcrypt.hash(this.contraseña, salt);
 });
 
 // Compara una contraseña en texto plano con la almacenada (hasheada)

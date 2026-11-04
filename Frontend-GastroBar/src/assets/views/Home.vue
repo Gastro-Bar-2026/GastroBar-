@@ -4,6 +4,11 @@ import SiteNav from './SiteNav.vue'
 
 const props = defineProps({ authenticated: Boolean, user: Object })
 const emit = defineEmits(['navigate', 'logout'])
+const featuredMenu = ref([
+  { id: 1, name: 'Ceviche de mango', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80', description: 'Mariscos frescos con cítricos y un toque tropical.', price: '$38.000' },
+  { id: 2, name: 'Pasta trufada', image: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?auto=format&fit=crop&w=900&q=80', description: 'Rica textura cremosa con hierbas y trufa suave.', price: '$42.000' },
+  { id: 3, name: 'Filete gourmet', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=900&q=80', description: 'Carne a la parrilla con reducción y acompañamientos.', price: '$58.000' }
+])
 const drinks = ref([
   { id: 1, name: 'BOGEMA BAR', image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=1200&q=85', description: 'Cócteles de autor preparados para disfrutar sin prisa.' },
   { id: 2, name: 'NEGRONI NEBULA', image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=1200&q=85', description: 'Una mezcla intensa, equilibrada y memorable.' },
@@ -137,6 +142,49 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <section class="home-events-section" aria-labelledby="home-events-title">
+      <div class="home-events-copy">
+        <p class="home-events-kicker">CELEBRA EN GASTROBAR</p>
+        <h2 id="home-events-title">Momentos inolvidables se viven alrededor de la mesa.</h2>
+        <p>Reúne a quienes más quieres para celebrar, brindar y disfrutar juntos. Nosotros ponemos el ambiente, los sabores y los detalles para hacer especial cada encuentro.</p>
+        <button type="button" class="home-events-button" @click="emit('navigate', 'reservations')">Reserva con nosotros <span aria-hidden="true">→</span></button>
+      </div>
+      <div class="home-events-gallery">
+        <figure class="home-event-photo home-event-photo-main">
+          <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=1200&q=85" alt="Familia y amigos compartiendo una comida en un restaurante cálido" loading="lazy">
+          <figcaption>Momentos para disfrutar juntos</figcaption>
+        </figure>
+        <figure class="home-event-photo home-event-photo-top">
+          <img src="https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&w=800&q=85" alt="Celebración compartida alrededor de una mesa" loading="lazy">
+        </figure>
+        <figure class="home-event-photo home-event-photo-bottom">
+          <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=85" alt="Invitados reunidos para celebrar una ocasión especial" loading="lazy">
+        </figure>
+        <span class="home-events-stamp">BUENA COMIDA<br>BUENA COMPAÑÍA</span>
+      </div>
+    </section>
+
+    <div class="veloris-menu-preview">
+      <div class="veloris-menu-preview-header">
+        <div>
+          <p class="veloris-menu-preview-kicker">PLATILLOS DESTACADOS</p>
+          <h3>Un vistazo a nuestro menú</h3>
+        </div>
+        <button type="button" class="veloris-menu-button" @click="emit('navigate', 'menu')">Ver menú</button>
+      </div>
+      <div class="veloris-menu-preview-grid">
+        <article v-for="item in featuredMenu" :key="item.id" class="veloris-menu-item-card">
+          <img :src="item.image" :alt="item.name" class="veloris-menu-item-image" loading="lazy" />
+          <div class="veloris-menu-item-body">
+            <div class="veloris-menu-item-topline">
+              <h4>{{ item.name }}</h4>
+              <span>{{ item.price }}</span>
+            </div>
+            <p>{{ item.description }}</p>
+          </div>
+        </article>
+      </div>
+    </div>
   </section>
 </template>
-
